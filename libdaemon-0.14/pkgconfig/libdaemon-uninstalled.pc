@@ -1,5 +1,5 @@
-libdir=/home/work/workd/control_server/libdaemon-0.14/libdaemon/.libs
-includedir=/home/work/workd/control_server/libdaemon-0.14
+libdir=/work/32work/lorawan/watchdog/libdaemon-0.14/libdaemon/.libs
+includedir=/work/32work/lorawan/watchdog/libdaemon-0.14
 
 Name: libdaemon
 Description: a lightweight C library that eases the writing of UNIX daemons

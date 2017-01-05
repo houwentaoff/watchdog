@@ -8,7 +8,7 @@ endif
 include env.mk
 
 all:
-	-@echo  "\033[32m Building watchdog ... \033[0m"
+	-@echo  "\033[32m Building watchdog module ... \033[0m"
 	for d in $(SUBDIRS); do [ -d $$d ] && $(MAKE) -C $$d; done
 
 clean:

@@ -25,34 +25,10 @@
 #include <stdio.h>
 #include <assert.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-extern int G_log_level;
-
-typedef enum {
-	ERROR_LEVEL = 0,
-	MESSAGE_LEVEL,
-	INFO_LEVEL,
-} DEBUG_LEVEL;
-
-
-#define PRINT(mylog, LOG_LEVEL, format, args...)		\
-		do {											\
-			if (mylog >= LOG_LEVEL) {				\
-				printf(format, ##args);				\
-			}										\
-		} while (0)
-
-#define APP_ERROR(format, args...)	PRINT(G_log_level, ERROR_LEVEL, "!!! [%s: %d] " format "\n", __FILE__, __LINE__, ##args)
-#define APP_PRINTF(format, args...)	PRINT(G_log_level, MESSAGE_LEVEL, ">>> " format, ##args)
-#define APP_INFO(format, args...)		PRINT(G_log_level, INFO_LEVEL, "::: " format, ##args)
-#define APP_ASSERT(expr)                 assert(expr)
-
-
-#ifdef APP_LOG_ENABLE
-#define APP_LOG(format, args...)         printf("***** " format, ##args)
-#else
-#define APP_LOG(format, args...)
-#endif
 
 #ifndef DIV_ROUND
 #define DIV_ROUND(divident, divider)    ( ( (divident)+((divider)>>1)) / (divider) )
@@ -78,25 +54,21 @@ typedef enum {
 #define NO_ARG		0
 #define HAS_ARG		1
 
+#define LORAWAN_WATCHDOG_PROC  "XXXXXX"
+#define LORAWAN_GATEWAY_PROC  "XXXXXX"
+#define LORAWAN_SDK_PROC  "XXXXXX"
+
 typedef struct hint_s {
 	const char *arg;
 	const char *str;
 } hint_t;
-
-
-#define	ENCODE_SERVER_PROC	"encode_server"
-#define	IMAGE_SERVER_PROC		"image_server"
-#define	MEDIA_SERVER_PROC		"media_server"
-#define	RTSP_SERVER_PROC		"rtsp_server"
-#define	TCP_SERVER_PROC		"tcp_stream_server"
-
 
 static int create_pid_file(char *proc)
 {
 	#define STRING_LENGTH	(32)
 	char buf[STRING_LENGTH], pid_file[STRING_LENGTH];
 	int retv, fd;
-	u32 old_pid, new_pid, remove_old_proc;
+	unsigned int old_pid, new_pid, remove_old_proc;
 
 	new_pid = getpid();
 	old_pid = remove_old_proc = 0;
@@ -118,16 +90,16 @@ static int create_pid_file(char *proc)
 			}
 		}
 		close(fd);
-		APP_PRINTF("[%s] is already running ! Re-start it again !\n", proc);
+		printf("[%s] is already running ! Re-start it again !\n", proc);
 	}
 
 	if ((fd = open(pid_file, O_CREAT | O_RDWR, 0644)) < 0) {
-		APP_ERROR("CANNOT create [%s] pid file !\n", proc);
+		printf("CANNOT create [%s] pid file !\n", proc);
 		return -1;
 	}
 	sprintf(buf, "%d\n", new_pid);
 	if ((retv = write(fd, (void *)buf, strlen(buf))) < 0) {
-		APP_ERROR("write length %d.\n", retv);
+		printf("write length %d.\n", retv);
 		return -1;
 	}
 	close(fd);
