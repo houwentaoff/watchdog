@@ -26,6 +26,7 @@
 #include <signal.h>
 #include "utils.h"
 #include "debug.h"
+#include "auto_conn.h"
 
 #define  EnableCoreDumps()\
 {\
@@ -55,22 +56,24 @@ typedef enum procst
     UNDEFINED,
 }procst_e;
 
-enum proc_pid {
+enum proc_pid 
+{
 	LORAWAN_SDK = 0,
 	LORAWAN_GATEWAY,
 	TOTAL_PROC_NR,
 };
 
-typedef struct proc_param_s {
+typedef struct proc_param_s 
+{
 	char param[PARAM_LENGTH];
 } proc_param_t;
 
-static proc_t child_proc[] = {
+static proc_t child_proc[] = 
+{
 	{0, -1, LORAWAN_GATEWAY_PROC, NULL},
 	{0, -1, LORAWAN_SDK_PROC, NULL},
 };
 static proc_param_t proc_params[TOTAL_PROC_NR];
-
 static int my_exec(proc_t *proc, char *param_list)
 {
 	if (proc == NULL)
@@ -205,6 +208,7 @@ static void signal_stop(int signo)
 int main ( int argc, char *argv[] )
 {
     int i=0;
+    pthread_t net_tid;
 
     EnableCoreDumps();
 
@@ -219,6 +223,7 @@ int main ( int argc, char *argv[] )
         wt_err("create_pid_file failed!\n");
         return -1;
     }
+    pthread_create (&net_tid, NULL, thread_auto_connet, NULL);
     while (1)
     {
         /*-----------------------------------------------------------------------------

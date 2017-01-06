@@ -18,7 +18,7 @@ LD:=
 CFLAGS+=$(INC)
 LDFLAGS+=$(LD)
 
-watchdog:watchdog.o
+watchdog:watchdog.o auto_conn.o
 	$(CC) $^ -o $@ $(LD)
 
 %.o:%.c
