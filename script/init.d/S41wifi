@@ -1,0 +1,97 @@
+#!/bin/sh
+#
+# Start the wifi....
+#
+
+AMBARELLA_CONF=ambarella.conf
+
+[ -r /etc/$AMBARELLA_CONF ] && . /etc/$AMBARELLA_CONF
+[ "$SYS_WIFI_ENABLE" = "yes" ] || exit 0
+
+start()
+{
+	kernel_ver=$(uname -r)
+
+	# Try to install Marvell WIFI drivers
+	if [ -f /lib/modules/$kernel_ver/kernel/drivers/net/wireless/libertas/libertas.ko ]; then
+		if [ "`lsmod | grep libertas`" = "" ]; then
+			echo "Starting Marvell WIFI..."
+			insmod /lib/modules/$kernel_ver/kernel/drivers/net/wireless/libertas/libertas.ko
+			insmod /lib/modules/$kernel_ver/kernel/drivers/net/wireless/libertas/libertas_sdio.ko helper_name=mrvl/helper_sd.bin fw_name=mrvl/sd8686.bin
+		fi
+	fi
+
+	# Try to install CSR WIFI drivers
+	if [ -f /lib/modules/$kernel_ver/extra/unifi_sdio.ko ]; then
+		if [ "`lsmod | grep unifi_sdio`" = "" ]; then
+			echo "Starting CSR WIFI..."
+			insmod /lib/modules/$kernel_ver/extra/oska.ko
+			insmod /lib/modules/$kernel_ver/extra/sdio.ko
+			#insmod /lib/modules/$kernel_ver/extra/slot_ambarella.ko sdio_slot_id=0 reset_gpio=9 power_gpio=12
+			insmod /lib/modules/$kernel_ver/extra/slot_ambarella.ko
+			insmod /lib/modules/$kernel_ver/extra/unifi_sdio.ko
+		fi
+	fi
+
+	sleep 1
+	wifi_eth=$(iwconfig | grep IEEE | awk '{print $1}')
+	if [ "$SYS_WIFI_ESSID" = "" ]; then
+		export SYS_WIFI_ESSID=ipcam-demo
+	fi
+	if [ "$SYS_WIFI_IP" = "" ]; then
+		export SYS_WIFI_IP=192.168.110.2
+	fi
+	if [ "$wifi_eth" != "" ]; then
+		echo "Config $wifi_eth..."
+		iwconfig $wifi_eth rate 54M
+		iwconfig $wifi_eth mode ad-hoc
+		iwconfig $wifi_eth essid $SYS_WIFI_ESSID
+		#wpa_supplicant -B -Dwext -i$wifi_eth -c/etc/wpa_supplicant/wpa-psk-tkip.conf
+		#udhcpc -i$wifi_eth
+		ifconfig $wifi_eth $SYS_WIFI_IP up
+		sleep 3
+	fi
+}
+stop()
+{
+	wifi_eth=$(iwconfig | grep IEEE | awk '{print $1}')
+	if [ "$wifi_eth" != "" ]; then
+		echo "Stoping $wifi_eth..."
+		ifconfig $wifi_eth down
+	fi
+
+	if [ "`lsmod | grep libertas`" != "" ]; then
+		echo "Stoping Marvell WIFI..."
+		#rmmod libertas_sdio
+		#rmmod libertas
+	fi
+	if [ "`lsmod | grep unifi_sdio`" != "" ]; then
+		echo "Stoping CSR WIFI..."
+		#rmmod unifi_sdio
+		#rmmod slot_ambarella
+		#rmmod sdio
+		#rmmod oska
+	fi
+}
+restart() {
+	stop
+	start
+}	
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart|reload)
+  	restart
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

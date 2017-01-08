@@ -141,10 +141,6 @@ static void netbase_stop(netcell_t *this)
 {
     char cmd[512]={0};
     //start success
-    if (!this)
-    {
-        return -1;
-    }
     sprintf(cmd, "service networking %s stop", this->device_name);
     system(cmd);
 }
@@ -176,7 +172,7 @@ static int init_netcells(netcell_t *cells)
     for (i=0; i<3; i++)
     {
         name = get_nicname(cells[i].type);
-        cells[i].name = name;
+        cells[i].device_name = name;
         switch(cells[i].type)
         {
             case ETH:
@@ -220,7 +216,7 @@ void *thread_auto_connet(void *param)
         {
             if (net_manage.activate)
             {
-                net_manage.activate.stop();
+                net_manage.activate->stop();
             }
             update_netmanage(&netcells[i]);
         }
@@ -247,7 +243,7 @@ void *thread_auto_connet(void *param)
                 {
                     if (net_manage.activate)
                     {
-                        net_manage.activate.stop();
+                        net_manage.activate->stop();
                     }
                     update_netmanage(&netcells[i]);
                 }

@@ -13,7 +13,7 @@ include ../env.mk
 
 INC+= -I$(TOP_DIR)/include
 
-LD:=
+LD:= -lpthread
 
 CFLAGS+=$(INC)
 LDFLAGS+=$(LD)

@@ -1,0 +1,139 @@
+#!/bin/sh
+#
+# Start the network....
+#
+
+KillProceExitMustSucc()
+{
+	_procname=$1
+	_killsig=$2
+	if [ -z "$_killsig"  ]
+	then
+		_killsig=2
+	fi
+	_hasproc=`pgrep $_procname`
+	while [ ! -z "$_hasproc" ]
+	do
+		pkill -$_killsig $_procname
+		sleep 1
+		_hasproc=`pgrep $_procname`
+	done
+
+	echo "$_procname exit succ"
+}
+
+
+MakeDirIfNotDir()
+{
+	_dir=$1
+	if [ ! -d "$_dir" ]
+	then
+		if [ -e "$_dir" ]
+		then
+			rm -f "$_dir"
+		fi
+
+		mkdir -p "$_dir"
+	fi
+}
+
+startsyslogd()
+{
+	_logfile=$1
+
+	echo "Start Syslogd"
+	if [ -z "$_logfile" ]
+	then
+		echo "should specify the file" >&2
+		exit 3
+	fi
+	_dir=`dirname $_logfile`
+	MakeDirIfNotDir "$_dir"
+
+	/sbin/syslogd -O "$_logfile"
+}
+
+
+stopsyslogd()
+{
+	echo "Stop Syslogd"
+	_times=0
+	_hassyslogd=`pgrep syslogd`
+	while [ ! -z "$_hassyslogd" ]
+	do
+		pkill -2 syslogd
+		sleep 1
+		_hassyslogd=`pgrep syslogd`
+		if [ $_times -gt 5  ]
+		then
+			# we kill the syslogd brutely for it will stop when device of eth0 not stop rightly
+			pkill -9 syslogd
+		fi
+
+		_times=`expr $_times + 1`
+	done	
+}
+
+
+
+
+
+
+start() {
+ 	echo "Starting network..."
+	/sbin/ifup -a
+	sleep 1
+#	stopsyslogd
+#	sleep 1
+#	startsyslogd "/tmp/log/messages"
+	ip_addr=$(ifconfig eth0 | grep 'inet addr' | tr -s ':' ' ' | awk '{ print $3 }')
+	upnp_enable=$(cat /etc/ambaipcam/mediaserver/upnp.cfg |grep 'enable' |awk '{print $3}')
+	if [ "$upnp_enable" == "1" ]; then
+		echo "Starting upnp..."
+		upnp_port=$(cat /etc/ambaipcam/mediaserver/upnp.cfg |grep 'port' |awk '{print $3}')
+		upnp_name=$(cat /etc/ambaipcam/mediaserver/upnp.cfg |grep 'name' |tr -d '"' |awk '{print $3}')
+		appweb_port=$(grep Listen /webSvr/appweb.conf -m 1 | awk '{print $2}')
+		device_sn=$(cat /etc/hostname | awk '{print $1}')
+		device_uuid=$(uuidgen)
+		if [ $appweb_port -eq 80 ]; then
+  		/usr/local/bin/miniupnpd -i eth0 -p $upnp_port -a $ip_addr -F $upnp_name -s $device_sn -u $device_uuid -w http://$ip_addr
+		else
+  		/usr/local/bin/miniupnpd -i eth0 -p $upnp_port -a $ip_addr -F $upnp_name -s $device_sn -u $device_uuid -w http://$ip_addr:$appweb_port
+		fi
+	  	echo "Upnp is started! port:$upnp_port, name:$upnp_name"
+	fi
+}
+stop() {
+	echo "Stopping network..."
+	/sbin/ifdown -a
+	sleep 1
+#	stopsyslogd
+	
+	upnp_pid=$(pgrep miniupnpd)
+	if [ "$upnp_pid" != "" ]; then
+		echo "Stopping upnp..."
+    		kill -9 $upnp_pid
+	fi
+}
+restart() {
+	stop
+	start
+}	
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart|reload)
+  	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

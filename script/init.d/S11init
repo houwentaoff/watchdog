@@ -1,0 +1,222 @@
+#!/bin/sh
+#
+# Init A5S Coconut...
+#
+
+if [ -f /etc/ambarella.conf ]; then
+	. /etc/ambarella.conf
+fi
+
+start()
+{
+	/usr/local/bin/serial_ctrl
+	kernel_ver=$(uname -r)
+	if [ -d /sys/module/ambarella_config/parameters ]; then
+		config_dir=/sys/module/ambarella_config/parameters
+	fi
+	if [ -d /sys/module/board/parameters ]; then
+		config_dir=/sys/module/board/parameters
+	fi
+
+	#Setup PLL
+	echo 1080P60 > /proc/ambarella/performance
+	echo ipcam > /proc/ambarella/mode
+
+	#Set I2C clock speed
+	echo 100000 > $config_dir/idc0_clk_limit
+
+	#Install NAND module
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/mtd/nand/ambarella_nand.ko ]; then
+		modprobe ambarella_nand
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/mtd/mtdchar.ko ]; then
+		modprobe mtdchar
+	fi
+
+	#Install I2C module
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/i2c/i2c-core.ko ]; then
+		modprobe i2c-core
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/i2c/busses/ambarella_i2c.ko ]; then
+		modprobe ambarella_i2c
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/i2c/busses/i2c-ambarella.ko ]; then
+		modprobe i2c-ambarella
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/i2c/muxes/ambarella-i2cmux.ko ]; then
+		modprobe ambarella-i2cmux
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/i2c/i2c-dev.ko ]; then
+		modprobe i2c-dev
+	fi
+
+	#Install SPI module
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/spi/spi_ambarella.ko ]; then
+		modprobe spi_ambarella
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/spi/spidev.ko ]; then
+		modprobe spidev
+	fi
+
+	#Install Eth module
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/net/phy/libphy.ko ]; then
+		modprobe libphy
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/net/arm/ambarella_eth.ko ]; then
+		modprobe ambarella_eth
+	fi
+
+	#Install Audio module
+	if [ -r /lib/modules/$kernel_ver/kernel/sound/soc/snd-soc-core.ko ]; then
+		modprobe snd-soc-core pmdown_time=500
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/sound/soc/ambarella/snd-soc-ambarella.ko ]; then
+		modprobe snd-soc-ambarella
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/sound/soc/ambarella/snd-soc-ambarella-i2s.ko ]; then
+		modprobe snd-soc-ambarella-i2s default_sfreq=1
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/sound/soc/codecs/snd-soc-wm8974-amb.ko ]; then
+		modprobe snd-soc-wm8974-amb
+	else
+		if [ -r /lib/modules/$kernel_ver/kernel/sound/soc/codecs/snd-soc-ak4642-amb.ko ]; then
+			modprobe snd-soc-ak4642-amb
+		else
+			if [ -r /lib/modules/$kernel_ver/kernel/sound/soc/codecs/snd-soc-ambdummy.ko ]; then
+				modprobe snd-soc-ambdummy
+			fi
+		fi
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/sound/soc/ambarella/snd-soc-a5sevk-gmi.ko ]; then
+		modprobe snd-soc-a5sevk-gmi
+	else
+		if [ -r /lib/modules/$kernel_ver/kernel/sound/soc/ambarella/snd-soc-a5sevk.ko ]; then
+			modprobe snd-soc-a5sevk
+		else
+			if [ -r /lib/modules/$kernel_ver/kernel/sound/soc/ambarella/snd-soc-coconut.ko ]; then
+				modprobe snd-soc-coconut
+			else
+				if [ -r /lib/modules/$kernel_ver/kernel/sound/soc/ambarella/snd-soc-dummy.ko ]; then
+					modprobe snd-soc-dummy
+				fi
+			fi
+		fi
+	fi
+
+	# Install SD module
+	# Default value of sd0_slot0_fixed_wp is -1.
+	# Force SD writeable
+	#echo 0 > $config_dir/sd0_slot0_fixed_wp
+	#echo 0 > $config_dir/sd0_slot1_fixed_wp
+	# Force SD read only
+	#echo 1 > $config_dir/sd0_slot0_fixed_wp
+	#echo 1 > $config_dir/sd0_slot1_fixed_wp
+
+	# Default value of sd0_slot0_fixed_cd is 
+	# -1 (auto detect, default)  0: (no detection)  1: (force detect once)
+	# Manule trigger CD to scan SD bus
+	# only works when CONFIG_MMC is defined in kernel
+	# you can rmmod ambarella_sd and modprobe ambarella_sd again,
+	# it will scan SD bus no matter what CD is.
+	#echo 1 > $config_dir/sd0_slot0_fixed_cd
+
+	# Set SD0 clock
+	# Default value of sd0_clk_limit is 25000000
+	#echo 25000000 > $config_dir/sd0_clk_limit
+	#set SD card timeout to 10 secs
+	echo 1000 > $config_dir/sd0_wait_timeout
+
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/mmc/host/ambarella_sd.ko ]; then
+		modprobe ambarella_sd
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/mmc/card/mmc_block.ko ]; then
+		modprobe mmc_block
+	fi
+
+	#Install input module
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/input/misc/ambarella_general_input.ko ]; then
+		modprobe ambarella_general_input
+	fi
+
+	#Install USB module
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/usb/gadget/ambarella_udc.ko ]; then
+		modprobe ambarella_udc
+	fi
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/usb/gadget/g_$SYS_USB_G_TYPE.ko ]; then
+		modprobe g_$SYS_USB_G_TYPE $SYS_USB_G_PARAMETER
+	fi
+
+	#Install crypto module
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/crypto/ambarella_crypto.ko ]; then
+		modprobe ambarella_crypto config_polling_mode=1
+	fi
+
+	#Install FB module
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/video/ambarella/ambarella_fb.ko ]; then
+		modprobe ambarella_fb
+	fi
+
+	#Install PWM module
+	if [ -r /lib/modules/$kernel_ver/kernel/drivers/video/backlight/pwm_bl.ko ]; then
+		echo 10000 > /sys/module/ambarella_config/parameters/board_pwm0_period_ns
+		echo 1000 > /sys/module/ambarella_config/parameters/board_pwm0_max_duty
+		modprobe pwm_bl
+	fi
+        
+	#start watchdog 2013/06/26
+    cd /lib/modules/$kernel_ver/extra
+    if [ -r /lib/modules/$kernel_ver/extra/watchdog_k.ko  ]; then
+        insmod watchdog_k.ko
+    fi
+        
+    if [ -r /lib/modules/$kernel_ver/extra/gpio_k.ko ]; then
+        insmod gpio_k.ko
+    fi
+        
+    if [ -r /lib/modules/$kernel_ver/extra/bcsr_k.ko ]; then
+        insmod bcsr_k.ko
+    fi
+        
+    if [ -r /lib/modules/$kernel_ver/extra/led_k.ko ];  then
+        insmod led_k.ko
+    fi
+        
+	# Turn on LED
+	debug_led0_id=$(cat $config_dir/board_debug_led0_gpio_id)
+	if [ "$(cat $config_dir/board_debug_led0_active_level)" = "0" ]; then
+		debug_led0_level="low"
+	else
+		debug_led0_level="high"
+	fi
+	echo $debug_led0_id > /sys/class/gpio/export
+	echo $debug_led0_level > /sys/class/gpio/gpio$debug_led0_id/direction
+	echo $debug_led0_id > /sys/class/gpio/unexport
+}
+
+stop()
+{
+	kernel_ver=$(uname -r)
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart|reload)
+  	restart
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+
