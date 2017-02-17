@@ -39,7 +39,7 @@
 #define BUFSIZE	(128)
 #define PARAM_NR		(10)
 #define PARAM_LENGTH	(256)
-#define DEFAULT_PATH	"/usr/local/bin"
+#define DEFAULT_PATH	"/mnt/data"
 
 typedef struct proc_s {
 	int	enable;

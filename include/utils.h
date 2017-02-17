@@ -54,9 +54,10 @@
 #define NO_ARG		0
 #define HAS_ARG		1
 
-#define LORAWAN_WATCHDOG_PROC  "XXXXXX"
-#define LORAWAN_GATEWAY_PROC  "XXXXXX"
-#define LORAWAN_SDK_PROC  "XXXXXX"
+#define LORAWAN_WATCHDOG_PROC   "watchdog"
+#define LORAWAN_GATEWAY_PROC    "lora_pkt_fwd"
+#define LORAWAN_SDK_PROC        "senzflow-lorabridge"
+
 
 typedef struct hint_s {
 	const char *arg;
