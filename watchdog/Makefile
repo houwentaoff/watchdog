@@ -1,6 +1,6 @@
 default:all
 
-all:tips watchdog
+all:tips watchdog watch_gprs
 
 tips:
 	-@echo  "\033[32m Building watchdog ... \033[0m"
@@ -11,15 +11,18 @@ endif
 
 include ../env.mk
 
-INC+= -I$(TOP_DIR)/include
+INC+= -I$(TOP_DIR)/include -I$(TOP_DIR)/gpio/include
 
-LD:= -lpthread
+LD:= -lpthread -L$(TOP_DIR)/gpio/lib
 
 CFLAGS+=$(INC)
 LDFLAGS+=$(LD)
 
 watchdog:watchdog.o auto_conn.o
 	$(CC) $^ -o $@ $(LD)
+
+watch_gprs:watch_gprs.o 
+	$(CC) $^ -o $@ $(LD) $(TOP_DIR)/gpio/lib/libgpio.a
 
 %.o:%.c
 	$(CC) -g -c $(CFLAGS) $< -o $@
