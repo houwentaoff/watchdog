@@ -11,7 +11,7 @@ endif
 
 include ../env.mk
 
-INC+= -I$(TOP_DIR)/include -I$(TOP_DIR)/gpio/include
+INC+= -I$(TOP_DIR)/watchdog/include -I$(TOP_DIR)/libgpio/include
 
 LD:= -lpthread -L$(TOP_DIR)/gpio/lib
 
@@ -22,7 +22,7 @@ watchdog:watchdog.o auto_conn.o
 	$(CC) $^ -o $@ $(LD)
 
 watch_gprs:watch_gprs.o 
-	$(CC) $^ -o $@ $(LD) $(TOP_DIR)/gpio/lib/libgpio.a
+	$(CC) $^ -o $@ $(LD) $(TOP_DIR)/libgpio/lib/libgpio.a
 
 %.o:%.c
 	$(CC) -g -c $(CFLAGS) $< -o $@

@@ -75,7 +75,7 @@ bool is_overnet()
     /* -----------------------------------------------------------------------------
      *  ping -I cell->device_name
      *-----------------------------------------------------------------------------*/
-    sprintf(cmd, "ping -I %s 8.8.8.8 -c 1 |grep '1 packets received'", "eth0");
+    sprintf(cmd, "ping -I %s 8.8.8.8 -c 1 |grep '1 packets received'", "ppp0");
     ret = system(cmd);
     if (ret != 0)
     {
@@ -86,7 +86,11 @@ bool is_overnet()
 static int gprs_run_hook(char* name)
 {
     char   buf[40]={0};
-    sprintf(buf, "/etc/init.d/S70pppd %s", name);
+// sprintf(buf, "/etc/init.d/S70pppd %s", name);
+    sprintf(buf, "/mnt/data/S60powergps %s", name);
+    system(buf);
+    sleep(3);
+    sprintf(buf, "/mnt/data/S70pppd %s", name);
     return !system(buf);
 }
 static bool online = false;
@@ -140,10 +144,11 @@ int main ( int argc, char *argv[] )
         if (!is_overnet())
         {
             online = false;
-            if (get_procstatus("pppd") != UNDEFINED)
+            if (get_procstatus("pppd") == EXITED)
             {
                 if (gprs_run_hook("restart"))
                 {
+
                     calling = true;
                 }
                 else

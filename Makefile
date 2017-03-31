@@ -1,7 +1,7 @@
 SUBDIRS=control watchdog
 
 ifndef TOP_DIR
-TOP_DIR=$(shell pwd)/
+TOP_DIR=$(shell pwd)/../
 export TOP_DIR
 endif
 
