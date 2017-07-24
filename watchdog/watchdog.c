@@ -131,17 +131,21 @@ procst_e get_procstatus(const char *name)
 
 	if(NULL != (fp =popen(cmd_buf, "r")))
 	{
-		while(NULL != fgets(buf, 512, fp) ) 
-		{
-		}
-		if(strcmp(buf, "") == 0)
-		{
-			pclose(fp);
-			return EXITED;
-		}
+        if (NULL == fgets(buf, 512, fp))
+        {
+            pclose(fp);
+            return NOEXIST;
+        }
+        if(strcmp(buf, "") == 0)
+        {
+            pclose(fp);
+            return NOEXIST;
+        }
+
 	}
 	else
 	{
+        pclose(fp);
 		wt_err("popen error\n");
 		return UNDEFINED;
 	}
@@ -223,7 +227,7 @@ int main ( int argc, char *argv[] )
         wt_err("create_pid_file failed!\n");
         return -1;
     }
-    pthread_create (&net_tid, NULL, thread_auto_connet, NULL);
+    //pthread_create (&net_tid, NULL, thread_auto_connet, NULL);
     while (1)
     {
         /*-----------------------------------------------------------------------------

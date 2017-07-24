@@ -1,0 +1,36 @@
+#!/bin/sh - 
+#===============================================================================
+#
+#          FILE: synctime.sh
+# 
+#         USAGE: ./synctime.sh 
+# 
+#   DESCRIPTION: 
+# 
+#       OPTIONS: ---
+#  REQUIREMENTS: ---
+#          BUGS: ---
+#         NOTES: ---
+#        AUTHOR: MR H
+#  ORGANIZATION: 
+#       CREATED: 07/19/2017 15:55
+#      REVISION:  ---
+#===============================================================================
+
+PPPO_DEVICE="/sys/class/net/ppp0/address"
+ETH0_DEVIDE="/sys/class/net/eth0/address"
+ret=""
+while [ "$ret" == "" ]
+do
+    sleep 2
+    if [ -f "$PPP0_DEVICE" -o -f "$ETH0_DEVIDE" ];then
+        if [ -f "$ETH0_DEVIDE" ]; then
+            ret=`ping -I eth0 8.8.8.8 -c 1 -s 1 -W 1 |grep '1 packets received'`
+        else
+            ret=`ping -I ppp0 8.8.8.8 -c 1 -s 1 -W 1 |grep '1 packets received'`
+        fi
+    fi
+done
+echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+/usr/bin/ntpdate 0.pool.ntp.org && /sbin/hwclock  -w
+

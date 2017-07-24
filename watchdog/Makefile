@@ -1,6 +1,6 @@
 default:all
 
-all:tips watchdog watch_gprs
+all:tips watchdog watch_3g
 
 tips:
 	-@echo  "\033[32m Building watchdog ... \033[0m"
@@ -21,7 +21,7 @@ LDFLAGS+=$(LD)
 watchdog:watchdog.o auto_conn.o
 	$(CC) $^ -o $@ $(LD)
 
-watch_gprs:watch_gprs.o 
+watch_3g:watch_3g.o 
 	$(CC) $^ -o $@ $(LD) $(TOP_DIR)/libgpio/lib/libgpio.a
 
 %.o:%.c

@@ -1,6 +1,8 @@
 #!/bin/sh
 
 
+/bin/echo /sbin/mdev > /proc/sys/kernel/hotplug
+/sbin/mdev -s
 # Start all init scripts in /etc/init.d
 # executing them in numerical order.
 #
@@ -24,4 +26,14 @@ for i in /etc/init.d/S??* ;do
 	    ;;
     esac
 done
+/sbin/ifconfig eth0 up
+/sbin/udhcpc &
+/usr/sbin/ubiattach /dev/ubi_ctrl -m 7 -d 1
+/bin/mount -t ubifs ubi1:data /mnt/data
+cd /mnt/data
+/mnt/data/watch_3g > /dev/null  &
+/mnt/data/reset_lgw.sh  start 
+/mnt/data/lora_pkt_fwd -l /mnt/data/log/lora.log &
+/etc/init.d/synctime &
+/usr/sbin/crond -c /root
 

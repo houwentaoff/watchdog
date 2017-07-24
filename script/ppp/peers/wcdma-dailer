@@ -1,0 +1,15 @@
+#/etc/ppp/peers/wcdma
+#This is pppd script, used Huawei MU609(Union)
+/dev/ttyUSB0
+logfile /var/log/pppd.log
+115200
+crtscts
+modem
+debug
+#nodetach
+usepeerdns
+defaultroute
+user "3gnet"
+0.0.0.0:0.0.0.0
+connect '/usr/sbin/chat -s -v -f /etc/ppp/peers/wcdma-connect-chat'
+disconnect '/usr/sbin/chat -s -v -f /etc/ppp/peers/disconnect-chat'
