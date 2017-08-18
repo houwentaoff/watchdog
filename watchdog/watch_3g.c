@@ -96,13 +96,13 @@ bool is_overnet()
      *-----------------------------------------------------------------------------*/
     while (count++ < 3)
     {
-        sprintf(cmd, "ping -I %s 8.8.8.8 -c 1 -s 1 -W 1 |grep '1 packets received'", "eth0");
+        sprintf(cmd, "ping -I %s 114.114.114.114 -c 1 -s 1 -W 1 |grep '1 packets received'", "eth0");
         ret = system(cmd);
         if (ret == 0)
         {
             break;
         }
-        sprintf(cmd, "ping -I %s 8.8.8.8 -c 1 -s 1 -W 1 |grep '1 packets received'", "ppp0");
+        sprintf(cmd, "ping -I %s 114.114.114.114 -c 1 -s 1 -W 1 |grep '1 packets received'", "ppp0");
         ret = system(cmd);//time out ?
         if (ret == 0)
         {

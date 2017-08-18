@@ -26,11 +26,14 @@ do
     if [ -f "$PPP0_DEVICE" -o -f "$ETH0_DEVIDE" ];then
         if [ -f "$ETH0_DEVIDE" ]; then
             ret=`ping -I eth0 8.8.8.8 -c 1 -s 1 -W 1 |grep '1 packets received'`
+            if [ "$ret" == "" ];then
+                ret=`ping -I ppp0 8.8.8.8 -c 1 -s 1 -W 1 |grep '1 packets received'`
+            fi    
         else
             ret=`ping -I ppp0 8.8.8.8 -c 1 -s 1 -W 1 |grep '1 packets received'`
         fi
     fi
 done
 echo "nameserver 8.8.8.8" >> /etc/resolv.conf
-/usr/bin/ntpdate 0.pool.ntp.org && /sbin/hwclock  -w
+/usr/bin/ntpdate 0.pool.ntp.org && /sbin/hwclock  -w --utc
 

@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# gps            Power on gps
+#
+
+start() {
+    printf "Starting gps: "
+    if [ ! -d "/sys/class/gpio/gpio288/" ]
+    then
+        /bin/echo "288" >/sys/class/gpio/export
+    fi
+    /bin/echo "out" >/sys/class/gpio/gpio288/direction
+    /bin/echo "1" >/sys/class/gpio/gpio288/value
+    /bin/sleep 0.5
+    /bin/echo "0" >/sys/class/gpio/gpio288/value
+    /bin/sleep 3 ##
+    /bin/echo "OK"
+}
+stop() {
+    printf "Stopping gps: "
+    /bin/echo "out" >/sys/class/gpio/gpio288/direction
+    /bin/echo "1" >/sys/class/gpio/gpio288/value
+    /bin/sleep 3
+    /bin/echo "0" >/sys/class/gpio/gpio288/value
+    /bin/echo "OK"
+}
+restart() {
+    stop
+    start
+}
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart|reload)
+        restart
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit $?

@@ -1,0 +1,60 @@
+#!/bin/sh - 
+#===============================================================================
+#
+#          FILE: loragw
+# 
+#         USAGE: ./loragw 
+# 
+#   DESCRIPTION: 
+# 
+#       OPTIONS: ---
+#  REQUIREMENTS: ---
+#          BUGS: ---
+#         NOTES: ---
+#        AUTHOR: Dr. Fritz Mehner (fgm), mehner.fritz@fh-swf.de
+#  ORGANIZATION: FH Südwestfalen, Iserlohn, Germany
+#       CREATED: 08/15/2017 15:07
+#      REVISION:  ---
+#===============================================================================
+
+start() {
+    printf "Starting loragw: "
+    cd /mnt/data
+    /mnt/data/reset_lgw.sh start
+    /mnt/data/lora_pkt_fwd -l /mnt/data/log/lora.log &
+    /bin/echo "OK"
+}
+stop() {
+    printf "Stopping loragw:" 
+    script_pids=`ps -ef | grep \"$0\" | grep -v grep|awk '{print $1}'`
+    if [ "$script_pids" != "" ]
+    then
+        /bin/kill -9 $script_pids
+    fi
+    if [ -f "/tmp/lora_pkt_fwd.pid" ]
+    then
+        /bin/kill -9 `cat /tmp/lora_pkt_fwd.pid`
+        /bin/echo "OK"
+    fi
+}
+restart() {
+    stop
+    start
+}
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart|reload)
+        restart
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit $?
+
